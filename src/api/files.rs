@@ -27,7 +27,7 @@ where
     ///
     pub async fn files_upload(&self, req: &SlackApiFilesUploadRequest) -> ClientResult<()> {
         self.http_session_api
-            .http_post("files.upload", req, Some(&SLACK_TIER2_METHOD_CONFIG))
+            .http_post_form_data("files.upload", req, Some(&SLACK_TIER2_METHOD_CONFIG))
             .await
     }
 }

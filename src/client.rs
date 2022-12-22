@@ -118,6 +118,33 @@ pub trait SlackClientHttpConnector {
 
         self.http_post_uri(full_uri, request, context)
     }
+
+    fn http_post_url_form_data<'a, RQ, RS>(
+        &'a self,
+        full_uri: Url,
+        request: &'a RQ,
+        context: SlackClientApiCallContext<'a>,
+    ) -> BoxFuture<'a, ClientResult<RS>>
+    where
+        RQ: serde::ser::Serialize + Send + Sync,
+        RS: for<'de> serde::de::Deserialize<'de> + Send + 'a;
+
+    fn http_post_form_data<'a, RQ, RS>(
+        &'a self,
+        method_relative_uri: &str,
+        request: &'a RQ,
+        context: SlackClientApiCallContext<'a>,
+    ) -> BoxFuture<'a, ClientResult<RS>>
+    where
+        RQ: serde::ser::Serialize + Send + Sync,
+        RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
+    {
+        let full_uri = SlackClientHttpApiUri::create_url(
+            &SlackClientHttpApiUri::create_method_uri_path(method_relative_uri),
+        );
+
+        self.http_post_url_form_data(full_uri, request, context)
+    }
 }
 
 pub type UserCallbackResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -319,6 +346,54 @@ where
             .http_api
             .connector
             .http_post_uri(full_uri, &request, context)
+            .await
+    }
+
+    pub async fn http_post_form_data<RQ, RS>(
+        &self,
+        method_relative_uri: &str,
+        request: &RQ,
+        rate_control_params: Option<&'a SlackApiMethodRateControlConfig>,
+    ) -> ClientResult<RS>
+    where
+        RQ: serde::ser::Serialize + Send + Sync,
+        RS: for<'de> serde::de::Deserialize<'de> + Send,
+    {
+        let context = SlackClientApiCallContext {
+            rate_control_params,
+            token: Some(self.token),
+            tracing_span: &self.span,
+            is_sensitive_url: false,
+        };
+
+        self.client
+            .http_api
+            .connector
+            .http_post_form_data(method_relative_uri, &request, context)
+            .await
+    }
+
+    pub async fn http_post_uri_form_data<RQ, RS>(
+        &self,
+        full_uri: Url,
+        request: &RQ,
+        rate_control_params: Option<&'a SlackApiMethodRateControlConfig>,
+    ) -> ClientResult<RS>
+    where
+        RQ: serde::ser::Serialize + Send + Sync,
+        RS: for<'de> serde::de::Deserialize<'de> + Send,
+    {
+        let context = SlackClientApiCallContext {
+            rate_control_params,
+            token: Some(self.token),
+            tracing_span: &self.span,
+            is_sensitive_url: false,
+        };
+
+        self.client
+            .http_api
+            .connector
+            .http_post_url_form_data(full_uri, &request, context)
             .await
     }
 }
