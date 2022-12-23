@@ -16,6 +16,7 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use std::sync::Arc;
 use std::time::Duration;
+use mpart_async::client::MultipartRequest;
 use tracing::*;
 use url::Url;
 
@@ -359,7 +360,7 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
                             full_uri.clone(),
                             hyper::http::Method::POST,
                         )
-                        .header("content-type", "multipart/form-data");
+                        .header("content-type", "application/json; charset=utf-8");
 
                         let http_request = HyperExtensions::setup_token_auth_header(
                             base_http_request,
@@ -387,24 +388,23 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
         request: &'a RQ,
         context: SlackClientApiCallContext<'a>,
     ) -> BoxFuture<'a, ClientResult<RS>>
-    where
-        RQ: serde::ser::Serialize + Send + Sync,
-        RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
+        where
+            RQ: serde::ser::Serialize + Send + Sync,
+            RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
     {
         let context_token = context.token;
 
         async move {
-            let post_json =
-                serde_json::to_string(&request_body).map_err(|err| map_serde_error(err, None))?;
-
             let response_body = self
                 .send_rate_controlled_request(
                     || {
+                        let mut multi_part = MultipartRequest::default();
+
                         let base_http_request = HyperExtensions::create_http_request(
                             full_uri.clone(),
                             hyper::http::Method::POST,
                         )
-                        .header("content-type", "application/json; charset=utf-8");
+                            .header("content-type", &format!("multipart/form-data; boundary={}", multi_part.get_boundary()));
 
                         let http_request = HyperExtensions::setup_token_auth_header(
                             base_http_request,
@@ -412,7 +412,7 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
                         );
 
                         http_request
-                            .body(post_json.clone().into())
+                            .body(Body::wrap_stream(multi_part))
                             .map_err(|e| e.into())
                     },
                     context,
@@ -423,6 +423,6 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
 
             Ok(response_body)
         }
-        .boxed()
+            .boxed()
     }
 }
