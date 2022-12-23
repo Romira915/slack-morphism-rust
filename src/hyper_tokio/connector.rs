@@ -12,11 +12,11 @@ use rvstruct::ValueStruct;
 
 use crate::prelude::hyper_ext::HyperExtensions;
 use crate::ratectl::SlackApiRateControlConfig;
+use mpart_async::client::MultipartRequest;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::sync::Arc;
 use std::time::Duration;
-use mpart_async::client::MultipartRequest;
 use tracing::*;
 use url::Url;
 
@@ -388,9 +388,9 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
         request: &'a RQ,
         context: SlackClientApiCallContext<'a>,
     ) -> BoxFuture<'a, ClientResult<RS>>
-        where
-            RQ: serde::ser::Serialize + Send + Sync,
-            RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
+    where
+        RQ: serde::ser::Serialize + Send + Sync,
+        RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
     {
         let context_token = context.token;
 
@@ -404,7 +404,13 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
                             full_uri.clone(),
                             hyper::http::Method::POST,
                         )
-                            .header("content-type", &format!("multipart/form-data; boundary={}", multi_part.get_boundary()));
+                        .header(
+                            "content-type",
+                            &format!(
+                                "multipart/form-data; boundary={}",
+                                multi_part.get_boundary()
+                            ),
+                        );
 
                         let http_request = HyperExtensions::setup_token_auth_header(
                             base_http_request,
@@ -423,6 +429,6 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
 
             Ok(response_body)
         }
-            .boxed()
+        .boxed()
     }
 }
