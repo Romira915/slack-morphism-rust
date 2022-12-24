@@ -1,24 +1,25 @@
-use crate::errors::*;
-use crate::hyper_tokio::ratectl::SlackTokioRateController;
-use crate::models::{SlackClientId, SlackClientSecret};
-use crate::*;
+use std::hash::Hash;
+use std::hash::Hasher;
+use std::sync::Arc;
+use std::time::Duration;
+
 use async_recursion::async_recursion;
 use futures::future::{BoxFuture, FutureExt};
 use hyper::client::*;
 use hyper::http::StatusCode;
 use hyper::{Body, Request};
 use hyper_rustls::HttpsConnector;
-use rvstruct::ValueStruct;
-
-use crate::prelude::hyper_ext::HyperExtensions;
-use crate::ratectl::SlackApiRateControlConfig;
 use mpart_async::client::MultipartRequest;
-use std::hash::Hash;
-use std::hash::Hasher;
-use std::sync::Arc;
-use std::time::Duration;
+use rvstruct::ValueStruct;
 use tracing::*;
 use url::Url;
+
+use crate::errors::*;
+use crate::hyper_tokio::ratectl::SlackTokioRateController;
+use crate::models::{SlackClientId, SlackClientSecret};
+use crate::prelude::hyper_ext::HyperExtensions;
+use crate::ratectl::SlackApiRateControlConfig;
+use crate::*;
 
 #[derive(Clone, Debug)]
 pub struct SlackClientHyperConnector<H: Send + Sync + Clone + connect::Connect> {
@@ -389,7 +390,7 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
         context: SlackClientApiCallContext<'a>,
     ) -> BoxFuture<'a, ClientResult<RS>>
     where
-        RQ: serde::ser::Serialize + Send + Sync,
+        RQ: serde::ser::Serialize + Send + Sync + Into<MultipartRequest<S>>,
         RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
     {
         let context_token = context.token;
@@ -398,7 +399,7 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
             let response_body = self
                 .send_rate_controlled_request(
                     || {
-                        let mut multi_part = MultipartRequest::default();
+                        let mut multi_part = request.into();
 
                         let base_http_request = HyperExtensions::create_http_request(
                             full_uri.clone(),
