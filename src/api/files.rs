@@ -2,9 +2,7 @@
 //! Support for Slack Files API methods
 //!
 
-
-
-use futures::future::{FutureExt};
+use futures::future::FutureExt;
 
 use mpart_async::client::MultipartRequest;
 use mpart_async::filestream::FileStream;
@@ -12,8 +10,6 @@ use rsb_derive::Builder;
 
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-
-
 
 use crate::models::*;
 use crate::ratectl::*;
