@@ -75,7 +75,7 @@ impl From<SlackApiFilesUploadRequest> for MultipartRequest<FileStream> {
             multi_part.add_field("initial_comment", initial_comment);
         }
         if let Some(thread_ts) = &value.thread_ts {
-            multi_part.add_field("thread_ts", &thread_ts.to_string());
+            multi_part.add_field("thread_ts", thread_ts.as_ref());
         }
         if let Some(title) = &value.title {
             multi_part.add_field("title", title);
