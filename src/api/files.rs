@@ -48,7 +48,7 @@ pub struct SlackApiFilesUploadRequest {
     pub title: Option<String>,
 }
 
-impl From<SlackApiFilesUploadRequest> for MultipartRequest<S> {
+impl From<SlackApiFilesUploadRequest> for MultipartRequest<FileStream> {
     fn from(value: SlackApiFilesUploadRequest) -> Self {
         let mut multi_part = MultipartRequest::default();
 
@@ -59,25 +59,25 @@ impl From<SlackApiFilesUploadRequest> for MultipartRequest<S> {
             .collect::<Vec<String>>()
             .join(",");
         multi_part.add_field("channels", &channels);
-        if let Some(&content) = value.content {
+        if let Some(content) = &value.content {
             multi_part.add_field("content", content);
         }
-        if let Some(&file) = value.file {
+        if let Some(file) = &value.file {
             multi_part.add_file("file", file);
         }
-        if let Some(&filename) = value.filename {
+        if let Some(filename) = &value.filename {
             multi_part.add_field("filename", filename);
         }
-        if let Some(&filetype) = value.filetype {
+        if let Some(filetype) = &value.filetype {
             multi_part.add_field("filetype", filetype);
         }
-        if let Some(&initial_comment) = value.filetype {
+        if let Some(initial_comment) = &value.filetype {
             multi_part.add_field("initial_comment", initial_comment);
         }
-        if let Some(&thread_ts) = value.thread_ts {
+        if let Some(thread_ts) = &value.thread_ts {
             multi_part.add_field("thread_ts", &thread_ts.to_string());
         }
-        if let Some(&title) = value.title {
+        if let Some(title) = &value.title {
             multi_part.add_field("title", title);
         }
 
