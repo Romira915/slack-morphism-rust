@@ -2,22 +2,22 @@
 //! Support for Slack Files API methods
 //!
 
-use std::collections::HashMap;
 
-use futures::future::{BoxFuture, FutureExt};
-use lazy_static::lazy_static;
+
+use futures::future::{FutureExt};
+
 use mpart_async::client::MultipartRequest;
 use mpart_async::filestream::FileStream;
 use rsb_derive::Builder;
-use rvstruct::*;
+
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use url::Url;
 
-use crate::models::blocks::{SlackBlock, SlackBlockText};
+
+
 use crate::models::*;
 use crate::ratectl::*;
-use crate::scroller::*;
+
 use crate::SlackClientSession;
 use crate::{ClientResult, SlackClientHttpConnector};
 
