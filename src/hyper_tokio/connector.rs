@@ -12,6 +12,7 @@ use rvstruct::ValueStruct;
 
 use crate::prelude::hyper_ext::HyperExtensions;
 use crate::ratectl::SlackApiRateControlConfig;
+use mpart_async::client::MultipartRequest;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::sync::Arc;
@@ -368,6 +369,56 @@ impl<H: 'static + Send + Sync + Clone + connect::Connect> SlackClientHttpConnect
 
                         http_request
                             .body(post_json.clone().into())
+                            .map_err(|e| e.into())
+                    },
+                    context,
+                    None,
+                    0,
+                )
+                .await?;
+
+            Ok(response_body)
+        }
+        .boxed()
+    }
+
+    fn http_post_url_form_data<'a, RQ, RS>(
+        &'a self,
+        full_uri: Url,
+        request: &'a RQ,
+        context: SlackClientApiCallContext<'a>,
+    ) -> BoxFuture<'a, ClientResult<RS>>
+    where
+        RQ: serde::ser::Serialize + Send + Sync + Into<MultipartRequest<S>>,
+        RS: for<'de> serde::de::Deserialize<'de> + Send + 'a,
+    {
+        let context_token = context.token;
+
+        async move {
+            let response_body = self
+                .send_rate_controlled_request(
+                    || {
+                        let mut multi_part = request.into();
+
+                        let base_http_request = HyperExtensions::create_http_request(
+                            full_uri.clone(),
+                            hyper::http::Method::POST,
+                        )
+                        .header(
+                            "content-type",
+                            &format!(
+                                "multipart/form-data; boundary={}",
+                                multi_part.get_boundary()
+                            ),
+                        );
+
+                        let http_request = HyperExtensions::setup_token_auth_header(
+                            base_http_request,
+                            context_token,
+                        );
+
+                        http_request
+                            .body(Body::wrap_stream(multi_part))
                             .map_err(|e| e.into())
                     },
                     context,

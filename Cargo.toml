@@ -22,7 +22,7 @@ path = "src/lib.rs"
 
 [features]
 default = []
-hyper = ["dep:tokio","dep:hyper", "dep:hyper-rustls", "dep:tokio-stream","dep:tokio-tungstenite", "dep:tokio-tungstenite", "dep:signal-hook", "dep:signal-hook-tokio"]
+hyper = ["dep:tokio", "dep:hyper", "dep:hyper-rustls", "dep:tokio-stream", "dep:tokio-tungstenite", "dep:tokio-tungstenite", "dep:signal-hook", "dep:signal-hook-tokio"]
 axum = ["hyper", "dep:axum", "dep:tower"]
 
 [dependencies]
@@ -56,6 +56,7 @@ signal-hook = { version = "0.3", features = ["extended-siginfo"], optional = tru
 signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"], optional = true }
 axum = { version = "0.6", optional = true }
 tower = { version = "0.4", optional = true }
+mpart-async = { version = "0.6.1", features = ["tokio"] }
 
 [dev-dependencies]
 cargo-husky = { version = "1", default-features = false, features = ["run-for-all", "prepush-hook", "run-cargo-fmt"] }
